@@ -1,0 +1,181 @@
+/* ==========================================================
+   JARDIM ANIMADO - ESTILOS (versão otimizada)
+   Índice: 1) Base  2) Camadas  3) Crescimento
+           4) Brisa  5) Corações e círculos  6) Modo leve
+   Regra de ouro: animar só transform e opacity nas camadas
+   (elementos HTML/SVG-raiz), que a GPU move sem repintar.
+   ========================================================== */
+
+/* ---------- 1) BASE ---------- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0c12;
+}
+
+body {
+  /* fundo grafite azulado, com um leve brilho esverdeado no chão */
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 100%, rgba(40, 110, 60, .28), transparent 70%),
+    radial-gradient(ellipse 70% 50% at 85% 20%, rgba(70, 60, 110, .22), transparent 70%),
+    linear-gradient(180deg, #0d0e15 0%, #171a27 62%, #0d1512 100%);
+  position: relative;
+}
+
+#defs { position: absolute; width: 0; height: 0; }
+#stars, #sparks { position: fixed; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; }
+#fx { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
+
+/* ---------- 2) CAMADAS ---------- */
+/* O mundo é posicionado/escalado pelo script.js (transform) */
+#world {
+  position: fixed;
+  left: 0; top: 0;
+  width: 600px; height: 900px;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+#world > div { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+
+/* Sombra do chão (pintada uma única vez) */
+#world > #ground {
+  top: 845px; height: 400px;
+  background: linear-gradient(180deg, rgba(10, 42, 22, 0), rgba(4, 18, 10, .95));
+}
+
+/* Cada SVG de planta/arbusto/capim é uma camada independente */
+.layer {
+  position: absolute;
+  display: block;
+  overflow: visible;
+  will-change: transform;
+}
+/* Wrapper do capim: só ele cresce (scaleY); o SVG dentro balança */
+.gc { position: absolute; transform-origin: 50% 100%; will-change: transform; }
+
+/* ---------- 3) CRESCIMENTO (ativado pela classe .live) ---------- */
+
+/* Caule: desenha-se de baixo para cima (pathLength=1 no SVG) */
+.stem { stroke-dasharray: 1 2; stroke-dashoffset: 1.03; opacity: 0; }
+.live .stem { animation: grow var(--dur) var(--d) cubic-bezier(.35, .1, .25, 1) forwards; }
+@keyframes grow {
+  from { stroke-dashoffset: 1.03; opacity: 1; }
+  to   { stroke-dashoffset: 0;    opacity: 1; }
+}
+
+/* Folhas, pétalas e cabeças: crescem de escala 0 até 1, com leve "pulo" */
+.pop { transform: scale(0); }
+.live .pop { animation: pop 1.8s var(--d) cubic-bezier(.22, 1.18, .36, 1) forwards; }   /* menos "quique" */
+@keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+
+/* Pétalas: abrem girando um pouquinho, como uma flor de verdade */
+.live .petal { animation-name: popPetal; animation-duration: 2.1s; }
+@keyframes popPetal {
+  from { transform: scale(0) rotate(-14deg); }
+  to   { transform: scale(1) rotate(0deg); }
+}
+
+/* Capim: cada tufo sobe esticando na vertical (GPU) */
+.rise { transform: scaleY(0); }
+.live .rise { animation: rise 2.6s var(--d) cubic-bezier(.2, .8, .3, 1) forwards; }
+@keyframes rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+/* Ao final do ciclo as flores somem suavemente e nascem de novo (loop) */
+#flowers { transition: opacity 2.6s ease; }
+#flowers.out { opacity: 0; }
+
+/* ---------- 4) BRISA ---------- */
+/* .plant / .bsway / .gsway = camada inteira balançando (GPU, quase de graça)
+   .flutter = folha individual tremulando
+   .hsway   = cabeça da flor balançando                                    */
+.plant, .bsway, .gsway { animation: sway var(--sd) ease-in-out var(--sdl) infinite; }
+.flutter {
+  transform-box: fill-box;
+  transform-origin: 0% 50%;         /* a folha gira a partir da base dela */
+  animation: sway var(--sd) ease-in-out var(--sdl) infinite;
+}
+.hsway { animation: hsway var(--sd) ease-in-out var(--sdl) infinite; }
+
+@keyframes sway {
+  0%, 100% { transform: rotate(calc(var(--a) * -1)); }
+  50%      { transform: rotate(var(--a)); }
+}
+@keyframes hsway {
+  0%, 100% { transform: rotate(calc(var(--ha, 5deg) * -1)); }
+  50%      { transform: rotate(var(--ha, 5deg)); }
+}
+
+/* Balanço em 2 camadas independentes (GPU): a propriedade `rotate` balança
+   a camada inteira e `transform: skewX` a curva devagar, em ritmo próprio.
+   O resultado nunca se repete igual. Navegadores antigos usam o balanço simples. */
+@supports (rotate: 1deg) {
+  .plant, .bsway, .gsway {
+    animation: swayR var(--sd) ease-in-out var(--sdl) infinite,
+               bend var(--sd2, 11s) ease-in-out var(--sdl2, 0s) infinite;
+  }
+}
+@keyframes swayR {
+  0%, 100% { rotate: calc(var(--a) * -1); }
+  50%      { rotate: var(--a); }
+}
+@keyframes bend {
+  0%, 100% { transform: skewX(calc(var(--b, .6deg) * -1)); }
+  50%      { transform: skewX(var(--b, .6deg)); }
+}
+
+/* ---------- 5) CORAÇÕES E CÍRCULOS VERDES ---------- */
+/* Cada coração tem 40px de base; o script.js só move/escala (transform) */
+.heart {
+  position: absolute;
+  left: 0; top: 0;
+  width: 40px; height: 40px;
+  will-change: transform, opacity;
+  --hc: #e8142c;
+  --k: 1;
+}
+.heart svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 6px rgba(255, 40, 60, .45));
+}
+.heart path { fill: var(--hc); }
+
+/* círculo verde luminoso (existe em todos, aparece só em alguns) */
+.heart .ring {
+  display: none;
+  position: absolute;
+  inset: -50%;                                   /* diâmetro = 2x o coração */
+  border-radius: 50%;
+  border: calc(2.5px / var(--k)) solid #4be07a;  /* borda com espessura constante na tela */
+  background: radial-gradient(circle, rgba(70, 220, 120, .18), rgba(70, 220, 120, .04) 70%);
+  box-shadow: 0 0 8px rgba(75, 224, 122, .55), inset 0 0 6px rgba(75, 224, 122, .4);
+  animation: pulse var(--pt, 2.6s) ease-in-out infinite;
+}
+.heart.has-ring .ring { display: block; }
+
+/* o brilho forte é uma camada à parte: só a opacidade pulsa (GPU) */
+.heart .ring::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(75, 224, 122, .95), inset 0 0 12px rgba(75, 224, 122, .7);
+  animation: pulseGlow var(--pt, 2.6s) ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(.9);  opacity: .65; }
+  50%      { transform: scale(1.1); opacity: 1; }
+}
+@keyframes pulseGlow { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+
+/* ---------- 6) MODO LEVE (ativado sozinho em aparelhos lentos) ---------- */
+/* Folhas e cabeças deixam de tremular sozinhas (seguem o balanço da planta) */
+.lite .flutter, .lite .hsway { animation: none; }
+
+/* Acessibilidade: reduz o movimento se o aparelho pedir */
+@media (prefers-reduced-motion: reduce) {
+  .plant, .bsway, .gsway, .flutter, .hsway { animation-duration: 40s; }
+}

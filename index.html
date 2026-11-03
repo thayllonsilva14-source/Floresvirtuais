@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <!-- viewport-fit=cover: usa a tela inteira do celular -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d0e14">
+  <title>Jardim de flores rosas</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Camada 1: estrelas do fundo (canvas, desenhado pelo script.js) -->
+  <canvas id="stars" aria-hidden="true"></canvas>
+
+  <!-- Gradientes compartilhados por TODAS as camadas SVG abaixo.
+       Fica aqui uma única vez (tamanho 0, mas NÃO use display:none,
+       senão alguns navegadores deixam de aplicar os gradientes). -->
+  <svg id="defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      <!-- Pétala rosa: centro claro, bordas mais fortes -->
+      <radialGradient id="gPetal" cx="50%" cy="75%" r="85%">
+        <stop offset="0%"   stop-color="#ffd6ec"/>
+        <stop offset="55%"  stop-color="#ff5fae"/>
+        <stop offset="100%" stop-color="#d63a8a"/>
+      </radialGradient>
+      <!-- Brilho suave atrás de cada flor -->
+      <radialGradient id="gGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%"   stop-color="#ff6fba" stop-opacity=".38"/>
+        <stop offset="100%" stop-color="#ff6fba" stop-opacity="0"/>
+      </radialGradient>
+      <!-- Folha clara (das hastes) -->
+      <linearGradient id="gLeaf" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="#2c9a3a"/>
+        <stop offset="100%" stop-color="#78e764"/>
+      </linearGradient>
+      <!-- Folha escura (arbusto) -->
+      <linearGradient id="gLeafDark" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="#0e4a26"/>
+        <stop offset="70%"  stop-color="#1f7f37"/>
+        <stop offset="100%" stop-color="#4ec35a"/>
+      </linearGradient>
+      <!-- Capim: base escura, ponta verde-limão brilhante -->
+      <linearGradient id="gGrass" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%"   stop-color="#137a2a"/>
+        <stop offset="100%" stop-color="#8cff4f"/>
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- "Mundo" do jardim: 600x900 unidades, escalado pelo script.js para
+       caber em qualquer tela. Cada planta / arbusto / tufo de capim vira
+       uma camada própria (SVG pequeno), criada pelo script.js. -->
+  <div id="world" role="img" aria-label="Jardim animado com flores rosas">
+    <div id="grassBack"></div>   <!-- capim escuro, atrás de tudo -->
+    <div id="bush"></div>        <!-- folhagem redonda escura -->
+    <div id="flowers"></div>     <!-- caules, folhas e flores -->
+    <div id="ground"></div>      <!-- sombra do chão -->
+    <div id="grassFront"></div>  <!-- capim brilhante na frente -->
+  </div>
+
+  <!-- Partículas luminosas (canvas) e corações (script.js) -->
+  <canvas id="sparks" aria-hidden="true"></canvas>
+  <div id="fx" aria-hidden="true"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
